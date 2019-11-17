@@ -15,3 +15,4 @@ All the following will go in Classifier.ipynb:
 - Single-layer
 ### Evaluation
 - Figure out how to compute ROC and then AUC
+### Methods for synthetic data generation
