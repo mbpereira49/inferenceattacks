@@ -14,5 +14,6 @@ Inputs to the pipeline:
 ### Methods for synthetic data generation
 
 ### Different classifiers
-- CNN : find appropriate basic image set
+- CNN : find appropriate basic image set. Euclidean metric
 - Random forest: should we do a different dataset?
+- Cosine similarity: what type of dataset and classifier should we use?
