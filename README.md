@@ -5,15 +5,14 @@
 - Extend to entropy along with maximum confidence
 
 ## To-do
-Follow the description in section Setup of the paper.
-All the following will go in Classifier.ipynb:
-### Pre-processing
-- k-means clustering for Purchase
-- train-test split
-### Target models
-- PyTorch for 5-layer network
-### Attack models
-- Single-layer
-### Evaluation
-- Figure out how to compute ROC and then AUC
+### Establish pipeline for running tests on new datasets
+Inputs to the pipeline:
+- preprocessed dataset
+- model to train
+- distance metric between points in the dataset
+
 ### Methods for synthetic data generation
+
+### Different classifiers
+- CNN : find appropriate basic image set
+- Random forest: should we do a different dataset?
