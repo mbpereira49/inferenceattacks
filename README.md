@@ -15,3 +15,5 @@
 ### https://arxiv.org/pdf/1912.02292.pdf
 - Follow architecture to look for double descent
 - Explore MIA effectiveness starting at top of descent
+
+### Add noise to labels
