@@ -6,10 +6,17 @@
 
 ## To-do
 
+### Tasks
+- Jordan: implement CNN in pytorch as done in https://arxiv.org/pdf/1912.02292.pdf with param for modifying model width. Verify it works in our pipeline with CIFAR10 and get a sense for how long it takes to run.
+- Alex: Extend pipeline to work with multiple trials
+- Rithvik: Jaccard distance for comparing images & Figure out how to add a variable amount of noise to k-means labels and then run some preliminary experiments
+
+
 ### Methods for synthetic data generation
 
 ### Different classifiers
 - CNN : find appropriate basic image set. Euclidean metric
+  - if we're doing Jaccard distance, should we only compare it with "real" images or should we make noisy images that might not have semantic meaning
 - Random forest: should we do a different dataset?
 
 ### https://arxiv.org/pdf/1912.02292.pdf
