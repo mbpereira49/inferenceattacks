@@ -16,4 +16,7 @@ Inputs to the pipeline:
 ### Different classifiers
 - CNN : find appropriate basic image set. Euclidean metric
 - Random forest: should we do a different dataset?
-- Cosine similarity: what type of dataset and classifier should we use?
+
+### https://arxiv.org/pdf/1912.02292.pdf
+- Follow architecture to look for double descent
+- Explore MIA effectiveness starting at top of descent
