@@ -5,15 +5,13 @@
 - Extend to entropy along with maximum confidence
 
 ## To-do
-Follow the description in section Setup of the paper.
-All the following will go in Classifier.ipynb:
-### Pre-processing
-- k-means clustering for Purchase
-- train-test split
-### Target models
-- PyTorch for 5-layer network
-### Attack models
-- Single-layer
-### Evaluation
-- Figure out how to compute ROC and then AUC
+
 ### Methods for synthetic data generation
+
+### Different classifiers
+- CNN : find appropriate basic image set. Euclidean metric
+- Random forest: should we do a different dataset?
+
+### https://arxiv.org/pdf/1912.02292.pdf
+- Follow architecture to look for double descent
+- Explore MIA effectiveness starting at top of descent
