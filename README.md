@@ -5,11 +5,6 @@
 - Extend to entropy along with maximum confidence
 
 ## To-do
-### Establish pipeline for running tests on new datasets
-Inputs to the pipeline:
-- preprocessed dataset
-- model to train
-- distance metric between points in the dataset
 
 ### Methods for synthetic data generation
 
