@@ -10,8 +10,10 @@ train_size = 2000
 test_size = 8000
 
 batch_size = 512
-epochs = 400
+epochs = 250
 verbose = True
+
+threshold = 0.0005
 
 sample_size = 1000
 
@@ -23,7 +25,6 @@ class Model:
         self.net = net
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         
     def train(self, criterion):
         x_tensor = torch.tensor(self.train_x).float()
@@ -57,7 +58,7 @@ class Model:
             if (epoch % 5 == 0):
                 if verbose:
                     print('[%d] loss: %.3f' % (epoch, running_loss / 5))
-                if running_loss < 0.001:
+                if running_loss < threshold:
                     if done_flag:
                         print("Terminated Early. 10 successive epochs all have 0 loss")
                         break
@@ -83,10 +84,11 @@ class Model:
     def auc(self):
         return self._auc(self.train_x, self.test_x)
     
-    def auc_by_distance(self, distance_func):
-        distances = distance_func(self.test_x, self.train_x)
+    def auc_by_distance(self, distance_func, group_size = 1):
+        distances = self.distances(distance_func)
         groups = {}
         for (features, dist) in zip(self.test_x, distances):
+            dist = dist//group_size * group_size
             if dist not in groups.keys():
                 groups[dist] = []
             groups[dist].append(features)
@@ -94,7 +96,11 @@ class Model:
         aucs = [self._auc(self.train_x, np.array(groups[key])) for key in keys]
         
         return (keys, aucs)
-
     
-        
+    dists = {}
+    def distances(self, distance_func):
+        key = hash((hash(self.test_x.tostring()), hash(self.train_x.tostring()), hash(distance_func)))
+        if key not in Model.dists:
+            Model.dists[key] = distance_func(self.test_x, self.train_x)
+        return Model.dists[key]
     
