@@ -6,8 +6,10 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch.optim as optim
 from sklearn.metrics import roc_auc_score
 
-train_size = 2000
-test_size = 8000
+#train_size = 200
+#test_size = 800
+train_size = 0.2
+test_size = 0.8
 
 batch_size = 512
 epochs = 250
@@ -19,8 +21,8 @@ sample_size = 1000
 
 class Model:
     def __init__(self, net, x, y):
-        self.x = x.values
-        self.y = y.values
+        self.x = x
+        self.y = y
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(self.x, self.y, train_size = train_size, test_size = test_size, random_state=0)
         self.net = net
         
@@ -72,12 +74,10 @@ class Model:
         return self.net
 
     def _auc(self, set_1, set_2):
-        train_sample = set_1[np.random.choice(set_1.shape[0], size = sample_size)]
-        test_sample = set_2[np.random.choice(set_2.shape[0], size = sample_size)]
-        train_confidence = torch.max(torch.exp(self.net(torch.Tensor(train_sample).to(self.device)).detach()), axis=1)[0]
-        test_confidence = torch.max(torch.exp(self.net(torch.Tensor(test_sample).to(self.device)).detach()), axis=1)[0]
+        train_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_1).to(self.device)).detach()), axis=1)[0]
+        test_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_2).to(self.device)).detach()), axis=1)[0]
 
-        actual = [1 for i in range(sample_size)] + [0 for i in range(sample_size)]
+        actual = [1 for i in range(set_1.shape[0])] + [0 for i in range(set_2.shape[0])]
         estimated = torch.cat([train_confidence, test_confidence])
         return roc_auc_score(torch.Tensor(actual), estimated.cpu())
     
@@ -103,4 +103,3 @@ class Model:
         if key not in Model.dists:
             Model.dists[key] = distance_func(self.test_x, self.train_x)
         return Model.dists[key]
-    
