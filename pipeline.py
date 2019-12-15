@@ -177,7 +177,7 @@ class PurchaseModel(Model):
 
 
 class CifarModel(Model):
-    def load_data(self, train_size=50000, test_size=10000):
+    def load_data(self, train_size=50000, test_size=10000, p_noise=0.0):
         print(f"Loading CIFAR10 from torchvision: {train_size} train, {test_size} test.")
         
         transform_train = transforms.Compose([
@@ -187,6 +187,7 @@ class CifarModel(Model):
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
             ])
 
+        
         transform_test = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
@@ -194,7 +195,13 @@ class CifarModel(Model):
 
         trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
         testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-
+        
+        # add noise to training labels
+        if (p_noise > 0):
+            ind = np.random.choice(len(trainset.targets), int(p_noise*len(trainset.targets)), replace=False)
+            for i in ind:
+                trainset.targets[i] = np.random.randint(10)
+        
         # subset datasets
         self.trainset = random_split(trainset, [train_size, trainset.data.shape[0] - train_size])[0]
         self.testset = random_split(testset, [test_size, testset.data.shape[0] - test_size])[0]
