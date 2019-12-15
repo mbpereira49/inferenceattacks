@@ -20,8 +20,7 @@ class Model:
         np.random.seed(0)
 
         self.random_state = 0
-        self.dists = {}
-        
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def load_data(self):
@@ -43,6 +42,9 @@ class Model:
 
         self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True)
         self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True)
+
+        self.train_x = np.stack([data[0] for data in self.trainset])
+        self.test_x = np.stack([data[0] for data in self.testset])
 
         # make model
         self.net.to(self.device)
@@ -104,14 +106,7 @@ class Model:
         return roc_auc_score(torch.Tensor(actual), estimated.cpu())
     
     def auc(self):
-        train_x = [np.array([])] * (self.train_size // self.train_loader.batch_size + 1)
-        for i, (x_batch, _) in enumerate(self.train_loader):
-            train_x[i] = x_batch.numpy()
-        test_x = [np.array([])] * (self.test_size // self.test_loader.batch_size + 1)
-        for i, (x_batch, _) in enumerate(self.test_loader):
-            test_x[i] = x_batch.numpy()
-
-        return self._auc(np.concatenate(train_x), np.concatenate(test_x))
+        return self._auc(self.train_x, self.test_x)
     
     def auc_by_distance(self, distance_func, group_size = 1):
         """
@@ -127,14 +122,16 @@ class Model:
                 groups[dist] = []
             groups[dist].append(features)
         keys = sorted([key for key in groups.keys()])
-        aucs = [self._auc(self.train_x, np.array(groups[key]), auc_sample_size) for key in keys]
+        aucs = [self._auc(self.train_x, np.array(groups[key])) for key in keys]
         
         return (keys, aucs)
+
+    dists = {}
 
     def distances(self, distance_func):
         key = hash((hash(self.trainset), hash(self.train_x.tostring()), hash(distance_func)))
         if key not in self.dists:
-            self.dists[key] = distance_func(self.test_x, self.train_x)
+            Model.dists[key] = distance_func(self.test_x, self.train_x)
         return self.dists[key]
 
 
