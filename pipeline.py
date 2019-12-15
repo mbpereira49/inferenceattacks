@@ -95,10 +95,10 @@ class Model:
 
         return self.net
 
-    def _auc(self, set_1, set_2, slow = False):
+    def _auc(self, set_1, set_2, big = False):
         self.net.eval()  # eval mode
 
-        if slow:
+        if big:
             train_confidence = []
             for elt in set_1:
                 train_confidence.append(torch.max(torch.exp(self.net(torch.Tensor([elt]).to(self.device)).detach()), axis=1)[0])
@@ -115,8 +115,8 @@ class Model:
         estimated = torch.cat([train_confidence, test_confidence])
         return roc_auc_score(torch.Tensor(actual), estimated.cpu())
     
-    def auc(self, slow = False):
-        return self._auc(self.train_x, self.test_x, slow)
+    def auc(self, big = False):
+        return self._auc(self.train_x, self.test_x, big)
     
     def auc_by_distance(self, distance_func, group_size = 1):
         """
