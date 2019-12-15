@@ -40,8 +40,8 @@ class Model:
         Trains self.net based on criterion loss function
         """
 
-        self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True)
-        self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True)
+        self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True, num_workers=4)
+        self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True, num_workers=4)
 
         self.train_x = np.stack([data[0] for data in self.trainset])
         self.test_x = np.stack([data[0] for data in self.testset])
