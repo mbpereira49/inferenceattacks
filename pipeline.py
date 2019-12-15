@@ -20,8 +20,7 @@ class Model:
         np.random.seed(0)
 
         self.random_state = 0
-        self.dists = {}
-        
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def load_data(self):
@@ -43,6 +42,9 @@ class Model:
 
         self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True)
         self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True)
+
+        self.train_x = np.stack([data[0] for data in self.trainset])
+        self.test_x = np.stack([data[0] for data in self.testset])
 
         # make model
         self.net.to(self.device)
@@ -104,14 +106,7 @@ class Model:
         return roc_auc_score(torch.Tensor(actual), estimated.cpu())
     
     def auc(self):
-        train_x = [np.array([])] * (self.train_size // self.train_loader.batch_size + 1)
-        for i, (x_batch, _) in enumerate(self.train_loader):
-            train_x[i] = x_batch.numpy()
-        test_x = [np.array([])] * (self.test_size // self.test_loader.batch_size + 1)
-        for i, (x_batch, _) in enumerate(self.test_loader):
-            test_x[i] = x_batch.numpy()
-
-        return self._auc(np.concatenate(train_x), np.concatenate(test_x))
+        return self._auc(self.train_x, self.test_x)
     
     def auc_by_distance(self, distance_func, group_size = 1):
         """
@@ -127,14 +122,16 @@ class Model:
                 groups[dist] = []
             groups[dist].append(features)
         keys = sorted([key for key in groups.keys()])
-        aucs = [self._auc(self.train_x, np.array(groups[key]), auc_sample_size) for key in keys]
+        aucs = [self._auc(self.train_x, np.array(groups[key])) for key in keys]
         
         return (keys, aucs)
+
+    dists = {}
 
     def distances(self, distance_func):
         key = hash((hash(self.trainset), hash(self.train_x.tostring()), hash(distance_func)))
         if key not in self.dists:
-            self.dists[key] = distance_func(self.test_x, self.train_x)
+            Model.dists[key] = distance_func(self.test_x, self.train_x)
         return self.dists[key]
 
 
@@ -143,7 +140,7 @@ class PurchaseModel(Model):
         super().__init__(random_state)
         self.n_labels = n_labels
 
-    def load_data(self, train_size=0.2, test_size=0.8):
+    def load_data(self, train_size=0.2, test_size=0.8, p_noise=0.0):
         print(f'Loading {self.n_labels}-Purchase from GitHub: {train_size} train, {test_size} test.')
         df_url = 'https://raw.githubusercontent.com/mbpereira49/inferenceattacks/master/data/df.csv'
         lab_url = 'https://raw.githubusercontent.com/mbpereira49/inferenceattacks/master/data/labels.csv'
@@ -168,6 +165,13 @@ class PurchaseModel(Model):
 
         self.trainset = TensorDataset(x_tensor, y_tensor)
         self.testset = TensorDataset(x_test_tensor, y_test_tensor)
+
+        if (p_noise > 0):
+            ind = np.random.choice(len(self.trainset.targets), int(p_noise*len(self.trainset.targets)), replace=False)
+            for i in ind:
+                curr = self.trainset.targets[i]
+                other_labels = np.concatenate([np.array(range(0, curr)), np.array(range(curr, self.n_labels))])
+                self.trainset.targets[i] = np.random.randint(other_labels)
 
         self.train_size = train_y.shape[0]
         self.test_size = test_y.shape[0]
