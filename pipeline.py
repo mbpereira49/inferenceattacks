@@ -95,18 +95,28 @@ class Model:
 
         return self.net
 
-    def _auc(self, set_1, set_2):
+    def _auc(self, set_1, set_2, slow = False):
         self.net.eval()  # eval mode
 
-        train_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_1).to(self.device)).detach()), axis=1)[0]
-        test_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_2).to(self.device)).detach()), axis=1)[0]
+        if slow:
+            train_confidence = []
+            for elt in set_1:
+                train_confidence.append(torch.max(torch.exp(self.net(torch.Tensor([elt]).to(self.device)).detach()), axis=1)[0])
+            train_confidence = torch.tensor(train_confidence)
+            test_confidence = []
+            for elt in set_2:
+                test_confidence.append(torch.max(torch.exp(self.net(torch.Tensor([elt]).to(self.device)).detach()), axis=1)[0])
+            test_confidence = torch.tensor(test_confidence)
+        else:
+            train_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_1).to(self.device)).detach()), axis=1)[0]
+            test_confidence = torch.max(torch.exp(self.net(torch.Tensor(set_2).to(self.device)).detach()), axis=1)[0]
 
         actual = [1 for i in range(set_1.shape[0])] + [0 for i in range(set_2.shape[0])]
         estimated = torch.cat([train_confidence, test_confidence])
         return roc_auc_score(torch.Tensor(actual), estimated.cpu())
     
-    def auc(self):
-        return self._auc(self.train_x, self.test_x)
+    def auc(self, slow = False):
+        return self._auc(self.train_x, self.test_x, slow)
     
     def auc_by_distance(self, distance_func, group_size = 1):
         """
@@ -152,6 +162,13 @@ class PurchaseModel(Model):
         y = y[self.n_labels].values
 
         self.input_dim = x.shape[1]
+
+        if (p_noise > 0):
+            ind = np.random.choice(len(y), int(p_noise*len(y)), replace=False)
+            for i in ind:
+                curr = y[i]
+                other_labels = np.concatenate([np.array(range(0, curr)), np.array(range(curr, self.n_labels))])
+                y[i] = np.random.choice(other_labels)
         
         # split data
         train_x, test_x, train_y, test_y = train_test_split(x, y,
@@ -165,13 +182,6 @@ class PurchaseModel(Model):
 
         self.trainset = TensorDataset(x_tensor, y_tensor)
         self.testset = TensorDataset(x_test_tensor, y_test_tensor)
-
-        if (p_noise > 0):
-            ind = np.random.choice(len(self.trainset.targets), int(p_noise*len(self.trainset.targets)), replace=False)
-            for i in ind:
-                curr = self.trainset.targets[i]
-                other_labels = np.concatenate([np.array(range(0, curr)), np.array(range(curr, self.n_labels))])
-                self.trainset.targets[i] = np.random.randint(other_labels)
 
         self.train_size = train_y.shape[0]
         self.test_size = test_y.shape[0]

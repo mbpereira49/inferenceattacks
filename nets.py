@@ -136,3 +136,36 @@ def make_cnn(c=64, num_classes=10):
         Flatten(),
         nn.Linear(c*8, num_classes, bias=True)
     )
+class CNN(nn.Module):
+    def __init__(self, c=64, num_classes=10):
+        super(CNN, self).__init__()
+        self.layer1 = nn.Sequential(nn.Conv2d(3, c, kernel_size=3, stride=1,
+                      padding=1, bias=True),
+                      nn.BatchNorm2d(c),
+                      nn.ReLU())
+        self.layer2 = nn.Sequential(nn.Conv2d(c, c*2, kernel_size=3,
+                      stride=1, padding=1, bias=True),
+                      nn.BatchNorm2d(c*2),
+                      nn.ReLU(),
+                      nn.MaxPool2d(2))
+        self.layer3 = nn.Sequential(nn.Conv2d(c*2, c*4, kernel_size=3,
+                      stride=1, padding=1, bias=True),
+                      nn.BatchNorm2d(c*4),
+                      nn.ReLU(),
+                      nn.MaxPool2d(2))
+        self.layer4 = nn.Sequential(nn.Conv2d(c*4, c*8, kernel_size=3,
+                      stride=1, padding=1, bias=True),
+                      nn.BatchNorm2d(c*8),
+                      nn.ReLU(),
+                      nn.MaxPool2d(2))
+        self.layer5 = nn.Sequential(nn.MaxPool2d(4),
+                      Flatten(),
+                      nn.Linear(c*8, num_classes, bias=True))
+        
+    def forward(self, x):
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.layer5(x)
+        return x
