@@ -140,7 +140,7 @@ class PurchaseModel(Model):
         super().__init__(random_state)
         self.n_labels = n_labels
 
-    def load_data(self, train_size=0.2, test_size=0.8):
+    def load_data(self, train_size=0.2, test_size=0.8, p_noise=0.0):
         print(f'Loading {self.n_labels}-Purchase from GitHub: {train_size} train, {test_size} test.')
         df_url = 'https://raw.githubusercontent.com/mbpereira49/inferenceattacks/master/data/df.csv'
         lab_url = 'https://raw.githubusercontent.com/mbpereira49/inferenceattacks/master/data/labels.csv'
@@ -165,6 +165,13 @@ class PurchaseModel(Model):
 
         self.trainset = TensorDataset(x_tensor, y_tensor)
         self.testset = TensorDataset(x_test_tensor, y_test_tensor)
+
+        if (p_noise > 0):
+            ind = np.random.choice(len(self.trainset.targets), int(p_noise*len(self.trainset.targets)), replace=False)
+            for i in ind:
+                curr = self.trainset.targets[i]
+                other_labels = np.concatenate([np.array(range(0, curr)), np.array(range(curr, self.n_labels))])
+                self.trainset.targets[i] = np.random.randint(other_labels)
 
         self.train_size = train_y.shape[0]
         self.test_size = test_y.shape[0]
