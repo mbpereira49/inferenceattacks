@@ -92,8 +92,24 @@ class Model:
                     running_loss = 0.0
 
         print('Finished Training')
+        
+    # from PyTorch tutorial
+    def error(self, dataset):
+        correct, total = 0, 0
+        for data in dataset:
+            images, labels = data
+            outputs = self.net(images.to(self.device))
+            predicted = torch.max(outputs.data, 1)[1]
+            total += labels.size(0)
+            correct += (predicted == labels.to(self.device)).sum().item()
+        return 1 - correct/total
 
-        return self.net
+    def train_error(self):
+        return self.error(self.train_loader)
+    def test_error(self):
+        return self.error(self.test_loader)
+    
+
 
     def _auc(self, set_1, set_2, big = False):
         self.net.eval()  # eval mode
