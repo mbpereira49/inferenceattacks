@@ -210,15 +210,21 @@ class PurchaseModel(Model):
 
 
 class CifarModel(Model):
-    def load_data(self, train_size=50000, test_size=10000, p_noise=0.0):
+    def load_data(self, train_size=50000, test_size=10000, p_noise=0.0, augment=False):
         print(f"Loading CIFAR10 from torchvision: {train_size} train, {test_size} test.")
         
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4), 
-            transforms.RandomHorizontalFlip(), 
-            transforms.ToTensor(), 
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            ])
+        if augment:
+            transform_train = transforms.Compose([
+                transforms.RandomCrop(32, padding=4), 
+                transforms.RandomHorizontalFlip(), 
+                transforms.ToTensor(), 
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                ])
+        else:
+            transform_train = transforms.Compose([
+                transforms.ToTensor(), 
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                ])
 
         
         transform_test = transforms.Compose([
