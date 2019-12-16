@@ -16,8 +16,8 @@ import nets
 
 class Model:
     def __init__(self, random_state=0):
-        torch.manual_seed(0)
-        np.random.seed(0)
+        torch.manual_seed(random_state)
+        np.random.seed(random_state)
 
         self.random_state = 0
 
