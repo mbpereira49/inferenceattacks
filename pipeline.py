@@ -89,7 +89,7 @@ class Model:
                 train_error = 1 - correct / total
                 test_error = self.test_error()
                 this_auc = self.auc(big=True)
-                print("{0:.3f}, {1:.3f}, {2:.3f}".format(train_error, test_error, this_auc))
+                print("{0:.3f}, {1:.3f}, {2:.3f}, ".format(train_error, test_error, this_auc))
                 self.train_errors.append(train_error)
                 self.test_errors.append(test_error)
                 self.aucs.append(this_auc)
