@@ -227,7 +227,7 @@ class PurchaseModel(Model):
 
 
 class CifarModel(Model):
-    def load_data(self, train_size=50000, test_size=10000, p_noise=0.0, augment=False):
+    def load_data(self, train_size=50000, test_size=10000, p_noise=0.0, test_noise=False, augment=False):
         print(f"Loading CIFAR10 from torchvision: {train_size} train, {test_size} test.")
         
         if augment:
@@ -260,6 +260,15 @@ class CifarModel(Model):
                 while attempt == trainset.targets[i]:
                     attempt = np.random.randint(10)
                 trainset.targets[i] = attempt
+
+            # add test noise
+            if test_noise:
+                ind = np.random.choice(len(testset.targets), int(p_noise*len(testset.targets)), replace=False)
+                for i in ind:
+                    attempt = np.random.randint(10)
+                    while attempt == testset.targets[i]:
+                        attempt = np.random.randint(10)
+                    testset.targets[i] = attempt
         
         # subset datasets
         torch.manual_seed(0)
