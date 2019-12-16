@@ -256,7 +256,7 @@ class CifarModel(Model):
             ind = np.random.choice(len(trainset.targets), int(p_noise*len(trainset.targets)), replace=False)
             for i in ind:
                 attempt = np.random.randint(10)
-                while attempt != trainset.targets[i]:
+                while attempt == trainset.targets[i]:
                     attempt = np.random.randint(10)
                 trainset.targets[i] = attempt
         
