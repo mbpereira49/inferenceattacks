@@ -85,7 +85,7 @@ class Model:
                 train_error = 1 - correct / total
                 test_error = self.test_error()
                 this_auc = self.auc(big=True)
-                print("{0:.3f}, {1:.3f}, {2:.3f}".format(train_error, test_error, this_auc))
+                print("{0}:  {1:.3f}, {2:.3f}, {3:.3f}".format(epoch, train_error, test_error, this_auc))
 
                 # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
