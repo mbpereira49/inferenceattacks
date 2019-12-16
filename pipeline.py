@@ -35,7 +35,7 @@ class Model:
         """
         self.net = net
         
-    def train(self, criterion, batch_size=512, epochs=400, verbose=True, early_stop_loss_threshold = 0.0005):
+    def train(self, criterion, batch_size=512, epochs=400, verbose=True, early_stop_loss_threshold = 0.0005, optimizer=None):
         """
         Trains self.net based on criterion loss function
         """
@@ -50,7 +50,10 @@ class Model:
         self.net.to(self.device)
         self.net.train()  # training mode
 
-        optimizer = optim.Adam(self.net.parameters())
+        if optimizer is None:
+            optimizer = optim.Adam(self.net.parameters())
+        else:
+            optimizer = optimizer
 
         # train model
         running_loss = 0.0
@@ -85,7 +88,7 @@ class Model:
                 train_error = 1 - correct / total
                 test_error = self.test_error()
                 this_auc = self.auc(big=True)
-                print("{0}:  {1:.3f}, {2:.3f}, {3:.3f}".format(epoch, train_error, test_error, this_auc))
+                print("{0:.3f}, {1:.3f}, {2:.3f}".format(train_error, test_error, this_auc))
 
                 # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
@@ -251,7 +254,10 @@ class CifarModel(Model):
         if (p_noise > 0):
             ind = np.random.choice(len(trainset.targets), int(p_noise*len(trainset.targets)), replace=False)
             for i in ind:
-                trainset.targets[i] = np.random.randint(10)
+                attempt = np.random.randint(10)
+                while attempt != trainset.targets[i]:
+                    attempt = np.random.randint(10)
+                trainset.targets[i] = attempt
         
         # subset datasets
         self.trainset = random_split(trainset, [train_size, trainset.data.shape[0] - train_size])[0]
