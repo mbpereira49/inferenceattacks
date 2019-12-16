@@ -23,6 +23,10 @@ class Model:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        self.train_errors = []
+        self.test_errors = []
+        self.aucs = []
+
     def load_data(self):
         raise NotImplemented
 
@@ -51,17 +55,14 @@ class Model:
         self.net.train()  # training mode
 
         if optimizer is None:
-            optimizer = optim.Adam(self.net.parameters())
+            self.optimizer = optim.Adam(self.net.parameters())
         else:
-            optimizer = optimizer
+            self.optimizer = optimizer
 
         # train model
         running_loss = 0.0
         done_flag = False
 
-        train_errors = []
-        test_errors = []
-        this_aucs = []
 
         for epoch in range(epochs):  # loop over the dataset multiple times
             correct = 0
@@ -71,13 +72,13 @@ class Model:
                 y_batch = y_batch.to(self.device)
 
                 # zero the parameter gradients
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
 
                 # forward + backward + optimize
                 outputs = self.net(x_batch)
                 loss = criterion(outputs, y_batch.long())
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 
                 running_loss += loss.item()
                 _, predicted = outputs.max(1)
@@ -89,6 +90,9 @@ class Model:
                 test_error = self.test_error()
                 this_auc = self.auc(big=True)
                 print("{0:.3f}, {1:.3f}, {2:.3f}".format(train_error, test_error, this_auc))
+                self.train_errors.append(train_error)
+                self.test_errors.append(test_error)
+                self.aucs.append(this_auc)
 
                 # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
@@ -106,8 +110,6 @@ class Model:
                     running_loss = 0.0
 
         print('Finished Training')
-
-        return train_errors, test_errors, this_aucs
         
     # from PyTorch tutorial
     def error(self, dataset):
