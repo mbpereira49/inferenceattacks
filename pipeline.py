@@ -157,7 +157,6 @@ class Model:
           - def distance_func(point, set). point is usually test set, set is training data
         """
         distances = self.distances(distance_func)
-        #distances = distance_func(self.test_x, self.train_x)
         groups = {}
         for (features, dist) in zip(self.test_x, distances):
             dist = dist//group_size * group_size
