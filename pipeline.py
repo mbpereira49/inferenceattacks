@@ -270,7 +270,7 @@ class CifarModel(Model):
     def build_net(self, k=64, num_classes=10):
         self.net = nets.make_resnet18k(k, num_classes)
 
-    def _auc(self, set_1, set_2, big = False):
+def _auc(self, set_1, set_2, big = False):
         with torch.no_grad():
 
             if big:
@@ -279,8 +279,8 @@ class CifarModel(Model):
 
                 idx = 0
                 batch_size = 500
-                num_batches = set_1.shape[0] // batch_size
-                for batch in np.split(set_1, num_batches):
+                num_batches = set_1.shape[0] // batch_size + 1
+                for batch in np.array_split(set_1, num_batches):
                     train_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
                     train_confidence[idx: idx + batch.shape[0]] = train_confidence_here.cpu().numpy()
                     idx += batch.shape[0]
@@ -288,8 +288,8 @@ class CifarModel(Model):
 
                 idx = 0
                 batch_size = 500
-                num_batches = set_2.shape[0] // batch_size
-                for batch in np.split(set_2, num_batches):
+                num_batches = set_2.shape[0] // batch_size + 1
+                for batch in np.array_split(set_2, num_batches):
                     test_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
                     test_confidence[idx: idx + batch.shape[0]] = test_confidence_here.cpu().numpy()
                     idx += batch.shape[0]
@@ -300,4 +300,5 @@ class CifarModel(Model):
 
             actual = [1 for i in range(set_1.shape[0])] + [0 for i in range(set_2.shape[0])]
             estimated = torch.cat([train_confidence, test_confidence])
+
             return roc_auc_score(torch.Tensor(actual), estimated.cpu())
