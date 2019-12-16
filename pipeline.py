@@ -39,7 +39,7 @@ class Model:
         """
         self.net = net
         
-    def train(self, criterion, batch_size=512, epochs=400, verbose=True, early_stop_loss_threshold = 0.0005, optimizer=None):
+    def train(self, criterion, batch_size=512, epochs=400, verbose=True, early_stop_loss_threshold = 0.0005, optimizer=None, batch_tests = True):
         """
         Trains self.net based on criterion loss function
         """
@@ -84,15 +84,16 @@ class Model:
                 _, predicted = outputs.max(1)
                 total += y_batch.size(0)
                 correct += predicted.eq(y_batch).sum().item()
-
-            with torch.no_grad():
-                train_error = 1 - correct / total
-                test_error = self.test_error()
-                this_auc = self.auc(big=True)
-                print("{0:.3f}, {1:.3f}, {2:.3f}, ".format(train_error, test_error, this_auc))
-                self.train_errors.append(train_error)
-                self.test_errors.append(test_error)
-                self.aucs.append(this_auc)
+            
+            if batch_tests:
+                with torch.no_grad():
+                    train_error = 1 - correct / total
+                    test_error = self.test_error()
+                    this_auc = self.auc(big=True)
+                    print("{0:.3f}, {1:.3f}, {2:.3f}, ".format(train_error, test_error, this_auc))
+                    self.train_errors.append(train_error)
+                    self.test_errors.append(test_error)
+                    self.aucs.append(this_auc)
 
                 # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
@@ -151,7 +152,7 @@ class Model:
     def auc(self, big = False):
         return self._auc(self.train_x, self.test_x, big)
     
-    def auc_by_distance(self, distance_func, group_size = 1):
+    def auc_by_distance(self, distance_func, group_size = 1, min_size = 0):
         """
         returns tuple of distances and aucs of test data, useful for generating curve in paper
           - def distance_func(point, set). point is usually test set, set is training data
@@ -163,7 +164,7 @@ class Model:
             if dist not in groups.keys():
                 groups[dist] = []
             groups[dist].append(features)
-        keys = sorted([key for key in groups.keys()])
+        keys = sorted([key for key in groups.keys() if len(groups[key]) >= min_size])
         aucs = [self._auc(self.train_x, np.array(groups[key])) for key in keys]
         
         return (keys, aucs)
@@ -172,9 +173,9 @@ class Model:
 
     def distances(self, distance_func):
         key = hash((hash(self.trainset), hash(self.train_x.tostring()), hash(distance_func)))
-        if key not in self.dists:
+        if key not in Model.dists:
             Model.dists[key] = distance_func(self.test_x, self.train_x)
-        return self.dists[key]
+        return Model.dists[key]
 
 
 class PurchaseModel(Model):
@@ -261,6 +262,8 @@ class CifarModel(Model):
                 trainset.targets[i] = attempt
         
         # subset datasets
+        torch.manual_seed(0)
+
         self.trainset = random_split(trainset, [train_size, trainset.data.shape[0] - train_size])[0]
         self.testset = random_split(testset, [test_size, testset.data.shape[0] - test_size])[0]
 
@@ -270,35 +273,35 @@ class CifarModel(Model):
     def build_net(self, k=64, num_classes=10):
         self.net = nets.make_resnet18k(k, num_classes)
 
-def _auc(self, set_1, set_2, big = False):
-        with torch.no_grad():
+    def _auc(self, set_1, set_2, big = False):
+            with torch.no_grad():
 
-            if big:
-                train_confidence = np.zeros(set_1.shape[0])
-                test_confidence = np.zeros(set_2.shape[0])
+                if big:
+                    train_confidence = np.zeros(set_1.shape[0])
+                    test_confidence = np.zeros(set_2.shape[0])
 
-                idx = 0
-                batch_size = 500
-                num_batches = set_1.shape[0] // batch_size + 1
-                for batch in np.array_split(set_1, num_batches):
-                    train_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
-                    train_confidence[idx: idx + batch.shape[0]] = train_confidence_here.cpu().numpy()
-                    idx += batch.shape[0]
-                train_confidence = torch.tensor(train_confidence)
+                    idx = 0
+                    batch_size = 500
+                    num_batches = set_1.shape[0] // batch_size + 1
+                    for batch in np.array_split(set_1, num_batches):
+                        train_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
+                        train_confidence[idx: idx + batch.shape[0]] = train_confidence_here.cpu().numpy()
+                        idx += batch.shape[0]
+                    train_confidence = torch.tensor(train_confidence)
 
-                idx = 0
-                batch_size = 500
-                num_batches = set_2.shape[0] // batch_size + 1
-                for batch in np.array_split(set_2, num_batches):
-                    test_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
-                    test_confidence[idx: idx + batch.shape[0]] = test_confidence_here.cpu().numpy()
-                    idx += batch.shape[0]
-                test_confidence = torch.tensor(test_confidence)
-            else:
-                train_confidence = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(set_1).to(self.device)).detach()), axis=1)[0]
-                test_confidence = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(set_2).to(self.device)).detach()), axis=1)[0]
+                    idx = 0
+                    batch_size = 500
+                    num_batches = set_2.shape[0] // batch_size + 1
+                    for batch in np.array_split(set_2, num_batches):
+                        test_confidence_here = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(batch).to(self.device)).detach()), axis=1)[0]
+                        test_confidence[idx: idx + batch.shape[0]] = test_confidence_here.cpu().numpy()
+                        idx += batch.shape[0]
+                    test_confidence = torch.tensor(test_confidence)
+                else:
+                    train_confidence = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(set_1).to(self.device)).detach()), axis=1)[0]
+                    test_confidence = torch.max(torch.nn.Softmax(dim=-1)(self.net(torch.Tensor(set_2).to(self.device)).detach()), axis=1)[0]
 
-            actual = [1 for i in range(set_1.shape[0])] + [0 for i in range(set_2.shape[0])]
-            estimated = torch.cat([train_confidence, test_confidence])
+                actual = [1 for i in range(set_1.shape[0])] + [0 for i in range(set_2.shape[0])]
+                estimated = torch.cat([train_confidence, test_confidence])
 
-            return roc_auc_score(torch.Tensor(actual), estimated.cpu())
+                return roc_auc_score(torch.Tensor(actual), estimated.cpu())
