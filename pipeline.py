@@ -9,7 +9,6 @@ from sklearn.metrics import roc_auc_score
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import random_split
-import torch.nn as nn
 
 import nets
 
