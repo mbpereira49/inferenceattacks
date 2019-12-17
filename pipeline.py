@@ -43,9 +43,8 @@ class Model:
         """
         Trains self.net based on criterion loss function
         """
-
-        self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True, num_workers=4)
-        self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True, num_workers=4)
+        self.train_loader = DataLoader(dataset=self.trainset, batch_size=batch_size, shuffle=True, num_workers=0)
+        self.test_loader = DataLoader(dataset=self.testset, batch_size=batch_size, shuffle=True, num_workers=0)
 
         self.train_x = np.stack([data[0] for data in self.trainset])
         self.test_x = np.stack([data[0] for data in self.testset])
@@ -67,7 +66,7 @@ class Model:
         for epoch in range(epochs):  # loop over the dataset multiple times
             correct = 0
             total = 0
-            for batch_idx, (x_batch, y_batch) in enumerate(self.train_loader):
+            for (x_batch, y_batch) in self.train_loader:
                 x_batch = x_batch.to(self.device)
                 y_batch = y_batch.to(self.device)
 
